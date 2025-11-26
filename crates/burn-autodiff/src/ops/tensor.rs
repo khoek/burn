@@ -1124,13 +1124,14 @@ impl<B: Backend, C: CheckpointStrategy> FloatTensorOps<Self> for Autodiff<B, C> 
                 _checkpointer: &mut Checkpointer,
             ) {
                 let (dim, indices) = ops.state;
+                let [_, indices_4rhs] = duplicate(&ops.parents, Some(indices));
 
                 binary::<B, _, _>(
                     ops.parents,
                     ops.node,
                     grads,
                     |grad| grad,
-                    |grad| B::float_select(grad, dim, indices),
+                    |grad| B::float_select(grad, dim, indices_4rhs.unwrap()),
                 );
             }
         }
@@ -1148,7 +1149,12 @@ impl<B: Backend, C: CheckpointStrategy> FloatTensorOps<Self> for Autodiff<B, C> 
             .stateful()
         {
             OpsKind::Tracked(prep) => prep.finish(
-                (dim, indices.clone()),
+                (
+                    dim,
+                    indices.clone(),
+                    value.primitive.shape(),
+                    B::float_device(&value.primitive),
+                ),
                 B::float_select_assign(tensor.primitive, dim, indices, value.primitive),
             ),
             OpsKind::UnTracked(prep) => prep.finish(B::float_select_assign(
