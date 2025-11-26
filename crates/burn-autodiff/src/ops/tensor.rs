@@ -951,7 +951,7 @@ impl<B: Backend, C: CheckpointStrategy> FloatTensorOps<Self> for Autodiff<B, C> 
 
                 unary::<B, _>(ops.parents, ops.node, grads, |grad| {
                     let zeros = B::float_zeros(shape, &device, grad.dtype().into());
-                    B::float_scatter(dim, zeros, indices, grad)
+                    B::float_select_assign(zeros, dim, indices, grad)
                 });
             }
         }
@@ -1061,7 +1061,7 @@ impl<B: Backend, C: CheckpointStrategy> FloatTensorOps<Self> for Autodiff<B, C> 
 
                 unary::<B, _>(ops.parents, ops.node, grads, |grad| {
                     let zeros = B::float_zeros(shape, &device, grad.dtype().into());
-                    B::float_select_assign(zeros, dim, indices, grad)
+                    B::float_scatter(dim, zeros, indices, grad)
                 });
             }
         }
